@@ -69,7 +69,8 @@ parseR <- function(in_file='data/testChat.txt',drop="44", user=NA){
   gr <- 1
   for (i in 1:length(rawData)) {
     # if starting with timestamp, save into out and move on (gr)
-    find.startline <- grepl("^\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}", rawData[i])
+    # Apparently now start: [05/02/2016, 7:30:46 pm] You created group “The Group” ...
+    find.startline <- grepl("^\\[?\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}", rawData[i])
     if (find.startline) {
       joinedData[gr] <- rawData[i]
       gr <- gr + 1
@@ -97,7 +98,15 @@ parseR <- function(in_file='data/testChat.txt',drop="44", user=NA){
     sepData<-suppressWarnings(separate(joinedData, V1, c("datetime", "message"), sep = ": ", extra = "merge"))
     sepData<-suppressWarnings(separate(sepData, datetime, c("datetime", "sender"), sep = "- ", extra = "merge"))
   } else {
-    sepData<-suppressWarnings(separate(joinedData, V1, c("datetime", "sender", "message"), sep = ": ", extra = "merge"))
+    # sepData<-suppressWarnings(separate(joinedData, V1, c("datetime", "sender", "message"), sep = ": ", extra = "merge"))
+    if(grepl("\\[", joinedData[1,1])){
+      sepData<-suppressWarnings(separate(joinedData, V1, c("datetime", "body"), sep = "] ", extra = "merge"))
+      sepData<-suppressWarnings(separate(sepData, body, c("sender", "message"), sep = ": ", extra = "merge"))
+    }
+    else{
+      sepData<-suppressWarnings(separate(joinedData, V1, c("datetime", "sender", "message"), sep = ": ", extra = "merge"))
+    }
+    
   }
   
   sepData$message<- stringi::stri_trans_general(sepData$message, "latin-ascii")
